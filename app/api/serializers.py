@@ -10,6 +10,8 @@ class ItemSerializer(serializers.ModelSerializer):
     district = serializers.StringRelatedField()
     type = serializers.StringRelatedField()
     lang = serializers.StringRelatedField()
+    photos = serializers.ImageField()
+
     class Meta:
         model = Item
         fields = '__all__'
