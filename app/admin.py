@@ -9,3 +9,7 @@ admin.site.register(Country)
 admin.site.register(City)
 admin.site.register(District)
 admin.site.register(Room)
+admin.site.register(Photo)
+admin.site.register(Currency)
+
+

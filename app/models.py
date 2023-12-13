@@ -3,6 +3,7 @@ from django.db import models
 from pathlib import Path
 
 from django.utils.deconstruct import deconstructible
+from psycopg2._psycopg import encodings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +36,11 @@ class City(models.Model):
     description = models.CharField(max_length=100)
     country = models.ForeignKey('Country', on_delete=models.PROTECT)
 
+    def upload_path(self, filename):
+        return f'files/{self.country}/{filename}'
+
+    image = models.ImageField(upload_to=upload_path, max_length=255)
+
     def __str__(self):
         return self.name
 
@@ -64,6 +70,14 @@ class Type(models.Model):
         return self.name
 
 
+class Currency(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 @deconstructible
 class DynamicPathGenerator:
 
@@ -82,6 +96,8 @@ class Item(models.Model):
 
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=100)
+    price = models.IntegerField()
+    currency = models.ForeignKey('Currency', on_delete=models.PROTECT)
 
     builder = models.CharField(max_length=100)
     apartment_square = models.IntegerField()
@@ -94,10 +110,12 @@ class Item(models.Model):
     # i expected language localisation
     lang = models.ForeignKey('Language', on_delete=models.PROTECT)
 
-    photos = models.ImageField(
-        upload_to=DynamicPathGenerator('photos'),
-        max_length=255
-    )
+    # photos = models.ImageField(
+    #     upload_to=DynamicPathGenerator('photos'),
+    #     max_length=255,
+    # )
+    photos = models.ManyToManyField('Photo', related_name='related_items', blank=True)
+
     file = models.FileField(
         upload_to=DynamicPathGenerator('files'),
         max_length=255
@@ -105,3 +123,15 @@ class Item(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Photo(models.Model):
+    item = models.ForeignKey('Item', related_name='related_photos', on_delete=models.CASCADE, blank=True)
+
+    def upload_path(self, filename):
+        return f'photos/{self.item.country}/{self.item.city}/{self.item.district}/{self.item.name}/{filename}'
+
+    image = models.ImageField(upload_to=upload_path, max_length=255)
+
+    def __str__(self):
+        return f"Photo of {self.item.name}"
